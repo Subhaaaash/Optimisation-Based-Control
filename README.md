@@ -27,7 +27,7 @@ Optimisation-Based-Control/
 
 | # | Topic | Concepts | Solutions | Lab | Code | Status |
 |---|---|---|---|---|---|---|
-| 1 | Linear systems and linear controllers | [md](Exercise-01_Linear-Systems-and-Controllers/01_Concepts.md) · [pdf](Exercise-01_Linear-Systems-and-Controllers/pdf/01_Concepts.pdf) | [md](Exercise-01_Linear-Systems-and-Controllers/02_Solutions.md) · [pdf](Exercise-01_Linear-Systems-and-Controllers/pdf/02_Solutions.pdf) | [md](Exercise-01_Linear-Systems-and-Controllers/03_Lab.md) · [pdf](Exercise-01_Linear-Systems-and-Controllers/pdf/03_Lab.pdf) | [python](Exercise-01_Linear-Systems-and-Controllers/python) | Task 0 ✅ · Task 1 ✅ · Task 2 ⏳ · Task 3 ⏳ · Numerical experiment ⏳ |
+| 1 | Linear systems and linear controllers | [md](Exercise-01_Linear-Systems-and-Controllers/01_Concepts.md) · [pdf](Exercise-01_Linear-Systems-and-Controllers/pdf/01_Concepts.pdf) | [md](Exercise-01_Linear-Systems-and-Controllers/02_Solutions.md) · [pdf](Exercise-01_Linear-Systems-and-Controllers/pdf/02_Solutions.pdf) | [md](Exercise-01_Linear-Systems-and-Controllers/03_Lab.md) · [pdf](Exercise-01_Linear-Systems-and-Controllers/pdf/03_Lab.pdf) | [python](Exercise-01_Linear-Systems-and-Controllers/python) | Tasks 0–3 ✅ · Numerical experiment ✅ · Lab (7 experiments) ✅ |
 
 ## How to use
 

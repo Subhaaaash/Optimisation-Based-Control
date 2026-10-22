@@ -15,6 +15,7 @@ The [Concepts](01_Concepts.md) file explains the theory in symbols. This lab sho
 | observability, $W_o$, unobservable subspace, PBH | [Experiment 4](#experiment-4--observability-what-can-the-sensors-tell-us) |
 | state feedback $u=-Kx$, closed loop $A-BK$, pole placement | [Experiment 5](#experiment-5--state-feedback-moving-the-eigenvalues) |
 | Task 1: tracking error $(I-A+BK)^{-1}(A-I)x_{\text{ref}}$ | [Experiment 6](#experiment-6--task-1-live-the-tracking-error) |
+| Tasks 2 and 3: prefilter $F$ vs integrator, model mismatch | [Experiment 7](#experiment-7--tasks-2-and-3-live-removing-the-sag) |
 
 ---
 
@@ -335,6 +336,49 @@ This sag is what **Task 2** (a reference prefilter $F$ that aims higher on purpo
 
 ---
 
+## Experiment 7 — Tasks 2 and 3 live: removing the sag
+
+**Script:** [`lab/exp7_prefilter_vs_integrator.py`](lab/exp7_prefilter_vs_integrator.py) · **Concepts:** Concepts §7.4–7.9 · Solutions Parts D, E
+
+Same arm, same 30° target, same $k_p = 15$ as Experiment 6. Three controllers are compared, first on the exact model and then on an arm carrying an **unknown 30 % extra payload**.
+
+**The prefilter (Task 2).** Holding the arm at 30° needs the torque $\bar u = mgl\,\theta_{\text{ref}} = 2.568$ N m. This is the holding input $B\bar u = (I - A)x_{\text{ref}}$ from Concepts §7.4, and it exists because a hanging arm *can* be held at 30°. With $F = \operatorname{diag}(f, 1)$, the zero-error condition $KFx_{\text{ref}} = \bar u + Kx_{\text{ref}}$ becomes $k_pf\theta_{\text{ref}} = mgl\,\theta_{\text{ref}} + k_p\theta_{\text{ref}}$, so
+
+$$
+f = 1 + \frac{mgl}{k_p} = 1 + \frac{4.905}{15} = 1.327 .
+$$
+
+The controller is told to aim at $1.327 \times 30° = 39.8°$, and it ends exactly at 30°.
+
+**The integrator (Task 3).** The arm has one motor and two states ($m < n$). A full-state integrator would always keep an eigenvalue at 1 (Task 3.3*), so we integrate only the angle error, $K_I = [k_I,\ 0]$. The gains are placed with `place_poles`: the two P poles plus one at 0.85.
+
+![Experiment 7](lab/figures/exp7_prefilter_vs_integrator.png)
+
+```text
+  nominal        P   : final angle  22.61°  error  -7.39°   final torque 1.935 N m
+  nominal        P+F : final angle  30.00°  error  -0.00°   final torque 2.568 N m
+  nominal        PI  : final angle  30.00°  error  +0.00°   final torque 2.568 N m
+  payload +30 %  P   : final angle  21.05°  error  -8.95°   final torque 2.343 N m
+  payload +30 %  P+F : final angle  27.93°  error  -2.07°   final torque 3.109 N m
+  payload +30 %  PI  : final angle  30.00°  error  +0.00°   final torque 3.339 N m
+```
+
+**What to notice**
+
+- **Nominal arm:** both fixes work. Their final torque is exactly the holding torque, 2.568 N m (dotted line). The P controller only produces 1.935 N m, and the missing torque is "paid for" by the 7.4° sag.
+- **Heavier arm:** now 30° needs $1.3 \times 2.568 = 3.339$ N m. The prefilter still adds the feedforward torque computed for the *old* mass, so a 2.1° sag returns (Task 2.3: it relies on the exact model). The integrator keeps adding torque as long as any error remains, and settles exactly at the new holding torque, 3.339 N m. It **learns** the torque instead of computing it (Solutions E.2, Step 5).
+- **The price of integral action:** the PI response overshoots to about 35° before settling, and it uses larger torques at the start. The prefilter response is smoother.
+
+![Payload animation](lab/figures/exp7_payload.gif)
+
+**Try it yourself**
+
+- Change `heavy = robot_arm(m=1.3)` to `m=0.8` (a lighter arm). Which way does the prefilter's error go now?
+- Increase the integrator pole from 0.85 to 0.95. The overshoot shrinks, but how long does it take to remove the sag?
+- Set `KI = np.array([[G[0, 2], G[0, 2]]])`, i.e. also integrate the angular-velocity error. Look at the eigenvalues of the $4\times4$ $\tilde A$ (as in `python/task3_integrator.py`): with one motor, one of them is always exactly 1.
+
+---
+
 ## Summary: what each formula looks like in real life
 
 | Formula / term | In the lab |
@@ -350,3 +394,6 @@ This sag is what **Task 2** (a reference prefilter $F$ that aims higher on purpo
 | $A - BK$ | the drone *with* its controller; its eigenvalues decide speed and stability (Exp. 5) |
 | $(I - A + BK)^{-1}(A - I)x_{\text{ref}}$ | how far the arm sags below the target (Exp. 6) |
 | $Ax_{\text{ref}} = x_{\text{ref}}$ | "the target is a place where the system would stay without any input" (Exp. 6) |
+| $(I - A)x_{\text{ref}} = B\bar u$ | the torque needed to hold the arm at 30° (Exp. 7) |
+| prefilter $F$ | "aim at 39.8° to land at 30°"; wrong as soon as the payload changes (Exp. 7) |
+| integrator $e^i$ | keeps adding torque until the error is exactly zero, whatever the payload (Exp. 7) |

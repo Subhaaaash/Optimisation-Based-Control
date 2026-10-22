@@ -7,7 +7,7 @@ subtitle: "Optimization-Based Control Methods · Linear Systems and Linear Contr
 
 **Course:** Optimization-Based Control Methods (TU Chemnitz, Automatic Control Group, Dr. Adrian Redder)
 **Topic:** Linear systems and linear controllers
-**Covers:** everything needed for Task 0 and Task 1 (Tasks 2, 3 and the numerical experiment will be added later)
+**Covers:** everything needed for Tasks 0–3 and the numerical experiment
 
 This document explains every idea from the beginning, assuming no previous control-systems course. Every formula is derived, and no steps are skipped. The worked solutions are in [`02_Solutions.md`](02_Solutions.md).
 
@@ -683,6 +683,180 @@ The two standard fixes are the subject of Tasks 2 and 3:
 1. **Reference prefilter $F$:** aim at a modified target $Fx_{\text{ref}}$, chosen so that the closed loop settles exactly at $x_{\text{ref}}$.
 2. **Integral action:** add an integrator state $e^i_{k+1} = e^i_k + T_s e_k$ that keeps accumulating the error. It can only stop changing when $e_k = 0$. This is the discrete-time **MIMO PI controller**.
 
+### 7.4 Which states can be held at all? (holdable equilibria)
+
+Before asking whether a *particular* controller reaches $x_{\text{ref}}$, ask whether *any* controller can. If $x_k \to x_{\text{ref}}$ and $u_k \to \bar u$, then taking the limit of $x_{k+1} = Ax_k + Bu_k$ gives
+
+$$
+x_{\text{ref}} = Ax_{\text{ref}} + B\bar u
+\quad\Longleftrightarrow\quad
+\boxed{(I - A)\,x_{\text{ref}} = B\,\bar u}
+$$
+
+So $x_{\text{ref}}$ can be held **if and only if $(I - A)x_{\text{ref}} \in \operatorname{im}(B)$**. Test: $\operatorname{rank}[\,B \;\; (I-A)x_{\text{ref}}\,] = \operatorname{rank}B$.
+
+Consequences:
+
+- **$B$ square and invertible ($m = n$):** every state can be held, with $\bar u = B^{-1}(I - A)x_{\text{ref}}$.
+- **Fewer inputs than states ($m < n$) and $I - A$ invertible:** the holdable states are exactly $\bar x = (I - A)^{-1}B\bar u$. They form a subspace of dimension at most $m$, so with one input it is a single line. Any reference off that line can **never** be held, by any controller: a P-controller, a prefilter and an integrator all fail. This is a property of the plant, not of the controller.
+- If $Ax_{\text{ref}} = x_{\text{ref}}$, then $\bar u = 0$ works. That is exactly the Task 1 condition.
+
+### 7.5 Reference prefilter (Task 2)
+
+**Control law:** $u_k = -K(x_k - Fx_{\text{ref}})$. The controller is told to aim at the *modified* target $\tilde x_{\text{ref}} := Fx_{\text{ref}}$. Everything from Task 1 still applies with $\tilde x_{\text{ref}}$ in place of $x_{\text{ref}}$:
+
+$$
+x_\infty = (I - (A - BK))^{-1}BK\,F x_{\text{ref}} .
+$$
+
+**Zero-error condition.** Set $x_\infty = x_{\text{ref}}$ and multiply by $I - (A - BK)$:
+
+$$
+BKFx_{\text{ref}} = (I - A + BK)x_{\text{ref}}
+\iff (A - BK + BKF)\,x_{\text{ref}} = x_{\text{ref}} .
+$$
+
+**1-D formula.** With $a, b, k, f$ scalars: $bkf = 1 - a + bk$, so
+
+$$
+f = \frac{1 - a + bk}{bk} = 1 + \frac{1 - a}{bk}\qquad(b \neq 0,\ k \neq 0).
+$$
+
+**Matrix formula** (for every $x_{\text{ref}}$ at once). We need $A - BK + BKF = I$, i.e. $BK(F - I) = I - A$. If $BK$ is invertible:
+
+$$
+\boxed{F = (BK)^{-1}(I - A) + I}
+$$
+
+$BK$ is $n\times n$ but has rank at most $\operatorname{rank}B \le m$. So invertibility needs $m \ge n$ and $\operatorname{rank}B = n$.
+
+**Interpretation: a prefilter is feedforward.** Rewrite the law as
+
+$$
+u_k = -K(x_k - x_{\text{ref}}) + \underbrace{K(F - I)x_{\text{ref}}}_{u_{\text{ff}}} .
+$$
+
+With the formula for $F$: $Bu_{\text{ff}} = BK(F - I)x_{\text{ref}} = (I - A)x_{\text{ref}}$. That is exactly the **holding input** $\bar u$ of §7.4. The prefilter adds the input needed to hold the target, computed in advance from the model. At the target the feedback part is zero, and the feedforward part does the holding.
+
+**Limitations.**
+
+1. The feedforward is computed from $A$ and $B$. If the real plant differs, the computed holding input is wrong and an error comes back. Nothing measures or corrects this.
+2. The general formula needs $BK$ invertible ($m \ge n$). With $m < n$, a prefilter can only fix a reference that is holdable (§7.4).
+
+### 7.6 Block matrices
+
+Task 3 stacks two vectors into one bigger state, so we need matrices made of blocks.
+
+**Block multiplication** works like ordinary multiplication, with blocks in place of numbers, as long as the sizes fit. Keep the order of the factors, because blocks do not commute:
+
+$$
+\begin{bmatrix} P & Q \\ R & S \end{bmatrix}\begin{bmatrix} v \\ w \end{bmatrix}
+= \begin{bmatrix} Pv + Qw \\ Rv + Sw \end{bmatrix}.
+$$
+
+*Example:* with $n = 2$, $\begin{bmatrix} x \\ e^i \end{bmatrix} \in \mathbb{R}^4$, and $\begin{bmatrix} T_s I & I \end{bmatrix}\begin{bmatrix} x \\ e^i \end{bmatrix} = T_s x + e^i$.
+
+**Determinant of a block matrix with scalar-multiple-of-identity blocks.** If all four blocks are multiples of $I_n$:
+
+$$
+\det\begin{bmatrix} pI & qI \\ rI & sI \end{bmatrix} = (ps - qr)^n .
+$$
+
+*Why:* reorder the rows and columns so that the coordinates belonging together ($x_1$ with $e^i_1$, $x_2$ with $e^i_2$, …) sit next to each other. Reordering rows and columns in the same way does not change the determinant. The matrix becomes block-diagonal with $n$ copies of $\begin{bmatrix} p & q \\ r & s\end{bmatrix}$, and the determinant of a block-diagonal matrix is the product of the blocks' determinants. Consequently, the eigenvalues of such a matrix are those of the $2\times2$ matrix $\begin{bmatrix} p & q \\ r & s \end{bmatrix}$, each repeated $n$ times.
+
+### 7.7 Integral action: the MIMO PI controller (Task 3)
+
+$$
+u_k = -K_p e_k - K_I e^i_k,
+\qquad e_k = x_k - x_{\text{ref}},
+\qquad e^i_{k+1} = e^i_k + T_s e_k,\quad e^i_0 = 0,
+$$
+
+with $K_p, K_I \in \mathbb{R}^{m\times n}$. Unrolling gives $e^i_k = T_s\sum_{j=0}^{k-1}e_j$, the running sum of all past errors. It is the discrete version of $\int e\,dt$.
+
+**Why it removes the steady-state error.** If everything converges, the integrator equation in the limit reads $e^i_\infty = e^i_\infty + T_s e_\infty$. Hence $T_s e_\infty = 0$, and since $T_s > 0$, $e_\infty = 0$. The integrator can only stop changing when the error is exactly zero. Meanwhile $-K_I e^i_\infty$ supplies the holding input $\bar u$ of §7.4: the integrator *learns* it from the data instead of computing it from the model. That is why model errors don't matter.
+
+**Augmented state-space model.** Substitute $u_k$ into the plant and stack $z_k = \begin{bmatrix} x_k \\ e^i_k\end{bmatrix}$:
+
+$$
+z_{k+1} =
+\underbrace{\begin{bmatrix} A - BK_p & -BK_I \\ T_s I & I \end{bmatrix}}_{\tilde A} z_k
++ \underbrace{\begin{bmatrix} BK_p \\ -T_s I \end{bmatrix}}_{\tilde B} x_{\text{ref}} .
+$$
+
+This is the same kind of system as in Task 1, $z_{k+1} = \tilde A z_k + \tilde B x_{\text{ref}}$ with a constant "input" $x_{\text{ref}}$. The derivation is written out in full in the Solutions file (Part E).
+
+**Proposition 1.3 (lecture).** If $\tilde A$ is asymptotically stable, then $x_\infty = x_{\text{ref}}$ for every constant $x_{\text{ref}}$.
+
+**When can $\tilde A$ be made asymptotically stable?** Write $\tilde A = A_{\text{aug}} - B_{\text{aug}}[\,K_p\;K_I\,]$ with
+
+$$
+A_{\text{aug}} = \begin{bmatrix} A & 0 \\ T_s I & I \end{bmatrix},\qquad
+B_{\text{aug}} = \begin{bmatrix} B \\ 0 \end{bmatrix}.
+$$
+
+This is ordinary state feedback on the augmented system, so we need $(A_{\text{aug}}, B_{\text{aug}})$ to be stabilizable. $A_{\text{aug}}$ is block-triangular, so its eigenvalues are those of $A$ plus $n$ eigenvalues equal to $1$ (from the integrators). PBH at $\lambda = 1$:
+
+$$
+\begin{bmatrix} I - A_{\text{aug}} & B_{\text{aug}} \end{bmatrix}
+= \begin{bmatrix} I - A & 0 & B \\ -T_s I & 0 & 0 \end{bmatrix}.
+$$
+
+The middle block column is zero. The bottom block row $[-T_s I,\ 0,\ 0]$ already has rank $n$, and it uses up the first block column. The top block row then needs rank $n$ from the $B$ columns alone. So the rank is $n + \operatorname{rank}B$, and
+
+$$
+\lambda = 1 \text{ can be moved} \iff \operatorname{rank}B = n \;(\Rightarrow m \ge n).
+$$
+
+**With fewer inputs than states ($m < n$), $\lambda = 1$ is always an eigenvalue of $\tilde A$**, whatever $K_p, K_I$ are. $K_I$ is $m\times n$ with $m < n$, so there is a $w \neq 0$ with $K_I w = 0$. Then
+
+$$
+\tilde A\begin{bmatrix} 0 \\ w \end{bmatrix} = \begin{bmatrix} -BK_I w \\ w \end{bmatrix} = \begin{bmatrix} 0 \\ w \end{bmatrix}.
+$$
+
+That integrator direction has no effect on the input, so it just keeps summing up its error component forever.
+
+**Practical fix when $m < n$:** integrate only $m$ chosen output errors, e.g. $e^i_{k+1} = e^i_k + T_s(Cx_k - r)$ with a $C$ of $m$ rows. That forces those outputs to their references. The remaining states settle wherever the holdable equilibrium puts them (§7.4).
+
+**Merely Lyapunov stable $\tilde A$** (some $|\lambda| = 1$, none outside):
+
+- $\lambda = e^{\pm i\varphi} \neq 1$: $\tilde A^k$ does not decay, so the transient never dies. The error oscillates forever.
+- $\lambda = 1$: $I - \tilde A$ is singular, so there may be no equilibrium or infinitely many. The geometric-series argument of Task 1 breaks down. Typically one integrator component grows without bound while an error remains. This is **integrator windup**.
+
+### 7.8 Choosing the gains (pole placement in practice)
+
+The task only requires stability, so any stabilizing gains will do. Three hand-friendly methods are used in the Solutions:
+
+1. **Prescribe the closed-loop matrix (when $B$ is invertible).** Choose a stable target matrix $D$ and set $A - BK = D$, i.e. $K = B^{-1}(A - D)$. With $D = 0.5I$, both eigenvalues are $0.5$.
+2. **Coefficient matching (single input, $n = 2$).** With $K = [k_1, k_2]$:
+   $$
+   \operatorname{tr}(A - BK) = \operatorname{tr}A - b_1k_1 - b_2k_2,
+   $$
+   $$
+   \det(A - BK) = \det A - k_1(b_1a_{22} - b_2a_{12}) - k_2(b_2a_{11} - b_1a_{21}).
+   $$
+   (The $k_1k_2$ terms cancel, so both are *linear* in $k$.) For desired eigenvalues $\lambda_1, \lambda_2$, set trace $= \lambda_1 + \lambda_2$ and determinant $= \lambda_1\lambda_2$, then solve two linear equations. `scipy.signal.place_poles` does the same automatically.
+3. **PI with scalar blocks (when $B$ is invertible).** Choose $A - BK_p = \alpha I$ and $BK_I = \beta I$, i.e. $K_p = B^{-1}(A - \alpha I)$ and $K_I = \beta B^{-1}$. Then $\tilde A = \begin{bmatrix} \alpha I & -\beta I \\ T_s I & I\end{bmatrix}$, and by §7.6 its eigenvalues solve
+   $$
+   (\lambda - \alpha)(\lambda - 1) + \beta T_s = 0
+   \iff \lambda^2 - (1 + \alpha)\lambda + (\alpha + \beta T_s) = 0 .
+   $$
+   For desired $\lambda_1, \lambda_2$: $\alpha = \lambda_1 + \lambda_2 - 1$ and $\beta = (\lambda_1\lambda_2 - \alpha)/T_s$.
+
+**About $T_s$.** It only appears as the product $K_I T_s$, so a different sampling time just rescales $K_I$. Steady-state results never depend on it.
+
+### 7.9 The three tracking controllers compared
+
+| | P (Task 1) | P + prefilter (Task 2) | PI (Task 3) |
+|---|---|---|---|
+| law | $-K(x - x_{\text{ref}})$ | $-K(x - Fx_{\text{ref}})$ | $-K_pe - K_Ie^i$ |
+| zero error if | $Ax_{\text{ref}} = x_{\text{ref}}$ | $(A - BK + BKF)x_{\text{ref}} = x_{\text{ref}}$ | $\tilde A$ asymptotically stable |
+| needs | — | exact model; $BK$ invertible for all $x_{\text{ref}}$ ($m \ge n$) | $\operatorname{rank}B = n$ for a full-state integrator |
+| holding input comes from | a remaining error | the model (feedforward) | the integrator (learned) |
+| model error | error | error comes back | still zero |
+| extra states | 0 | 0 | $n$ |
+| typical drawback | steady-state error | sensitive to model mismatch | slower, overshoot, windup risk |
+
 ---
 
 ## 8. Cheat sheet
@@ -715,3 +889,13 @@ The two standard fixes are the subject of Tasks 2 and 3:
 | P-tracking closed loop | $x_{k+1} = (A-BK)x_k + BKx_{\text{ref}}$ |
 | P-tracking limit | $x_\infty = (I - A + BK)^{-1}BKx_{\text{ref}}$ |
 | P-tracking error | $x_\infty - x_{\text{ref}} = (I - A + BK)^{-1}(A - I)x_{\text{ref}}$ |
+| $x_{\text{ref}}$ holdable at all | $(I - A)x_{\text{ref}} \in \operatorname{im}B$, holding input $B\bar u = (I-A)x_{\text{ref}}$ |
+| Prefilter limit | $x_\infty = (I - A + BK)^{-1}BKFx_{\text{ref}}$ |
+| Prefilter, zero error | $(A - BK + BKF)x_{\text{ref}} = x_{\text{ref}}$ |
+| Prefilter 1-D | $f = (1 - a + bk)/(bk)$ |
+| Prefilter matrix | $F = (BK)^{-1}(I - A) + I$ ($BK$ invertible) |
+| Integrator | $e^i_{k+1} = e^i_k + T_se_k$ |
+| Augmented PI model | $\tilde A = \begin{bmatrix} A - BK_p & -BK_I \\ T_sI & I\end{bmatrix}$, $\tilde B = \begin{bmatrix} BK_p \\ -T_sI\end{bmatrix}$ |
+| PI zero error | $\tilde A$ asymptotically stable $\Rightarrow x_\infty = x_{\text{ref}}$ |
+| Full-state PI possible | $\operatorname{rank}B = n$; if $m < n$, $\lambda = 1 \in \operatorname{eig}(\tilde A)$ always |
+| Block determinant | $\det\begin{bmatrix} pI & qI \\ rI & sI\end{bmatrix} = (ps - qr)^n$ |

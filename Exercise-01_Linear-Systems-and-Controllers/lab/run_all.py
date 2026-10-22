@@ -15,6 +15,7 @@ EXPERIMENTS = [
     "exp4_observability.py",
     "exp5_state_feedback.py",
     "exp6_tracking_error.py",
+    "exp7_prefilter_vs_integrator.py",
 ]
 for script in EXPERIMENTS:
     runpy.run_path(str(HERE / script), run_name="__main__")
