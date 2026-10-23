@@ -18,7 +18,13 @@ Optimisation-Based-Control/
 │   ├── 03_Lab.md                      ← hands-on lab: drone + robot arm, plots and animations
 │   ├── pdf/                           ← PDF versions of the three notes
 │   ├── python/                        ← scripts that verify every result
-│   └── lab/                           ← lab experiments (exp1 … exp6) and their figures/GIFs
+│   └── lab/                           ← lab experiments (exp1 … exp7) and their figures/GIFs
+├── Exercise-02_Dynamic-Programming/
+│   ├── README.md                      ← overview and progress of this exercise
+│   ├── 01_Concepts.md                 ← Lecture 2 theory, in depth, with derivations
+│   ├── 02_Solutions.md                ← step-by-step solutions
+│   ├── pdf/                           ← PDF versions of the notes
+│   └── python/                        ← scripts that verify every result, and figures
 └── tools/
     └── build_pdfs.sh                  ← regenerate the PDFs from the Markdown
 ```
@@ -28,6 +34,7 @@ Optimisation-Based-Control/
 | # | Topic | Concepts | Solutions | Lab | Code | Status |
 |---|---|---|---|---|---|---|
 | 1 | Linear systems and linear controllers | [md](Exercise-01_Linear-Systems-and-Controllers/01_Concepts.md) · [pdf](Exercise-01_Linear-Systems-and-Controllers/pdf/01_Concepts.pdf) | [md](Exercise-01_Linear-Systems-and-Controllers/02_Solutions.md) · [pdf](Exercise-01_Linear-Systems-and-Controllers/pdf/02_Solutions.pdf) | [md](Exercise-01_Linear-Systems-and-Controllers/03_Lab.md) · [pdf](Exercise-01_Linear-Systems-and-Controllers/pdf/03_Lab.pdf) | [python](Exercise-01_Linear-Systems-and-Controllers/python) | Tasks 0–3 ✅ · Numerical experiment ✅ · Lab (7 experiments) ✅ |
+| 2 | Dynamic programming (finite horizon) | [md](Exercise-02_Dynamic-Programming/01_Concepts.md) · [pdf](Exercise-02_Dynamic-Programming/pdf/01_Concepts.pdf) | [md](Exercise-02_Dynamic-Programming/02_Solutions.md) · [pdf](Exercise-02_Dynamic-Programming/pdf/02_Solutions.pdf) | — | [python](Exercise-02_Dynamic-Programming/python) | Tasks 1–4 ✅ · Numerical experiment ✅ · Additional task ⋆ ✅ |
 
 ## How to use
 
@@ -36,9 +43,10 @@ Optimisation-Based-Control/
 3. Try the task yourself, then compare with the **Solutions** file.
 4. Run the **Python** scripts to check the numbers:
    ```bash
-   pip install numpy scipy matplotlib pillow
+   pip install numpy scipy matplotlib pillow sympy
    python Exercise-01_Linear-Systems-and-Controllers/python/task0_reachability_observability.py
    python Exercise-01_Linear-Systems-and-Controllers/lab/run_all.py
+   python Exercise-02_Dynamic-Programming/python/numerical_experiment.py
    ```
 
 ![Drone recovering under state feedback](Exercise-01_Linear-Systems-and-Controllers/lab/figures/exp5_feedback_recovery.gif)
